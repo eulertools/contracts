@@ -198,10 +198,4 @@ contract EulerStaking is Ownable {
         eulerTxFee = _fee;
     }
 
-    function emergencyWithdraw(uint256 _amount) external onlyOwner {
-        uint256 _bal = euler.balanceOf(address(this));
-        if (_amount > _bal) _amount = _bal;
-
-        euler.safeTransfer(_msgSender(), _amount);
-    }
 }

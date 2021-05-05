@@ -197,5 +197,4 @@ contract EulerStaking is Ownable {
 
         eulerTxFee = _fee;
     }
-
 }

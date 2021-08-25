@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity >=0.8.0;
+pragma solidity >=0.8.0 <=0.9.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -130,13 +130,17 @@ contract EulerStaking is Ownable {
   }
 
   function deposit(uint256 pid, uint256 amount) external {
-    require(
-      amount >= minDepositAmount && amount < maxDepositAmount,
-      "invalid deposit amount"
-    );
 
     PoolInfo storage pool = poolInfo[pid];
     UserInfo storage user = userInfo[pid][msg.sender];
+
+    uint256 sumAmount = amount + user.amount;
+
+    require(
+      sumAmount >= minDepositAmount && sumAmount < maxDepositAmount,
+      "invalid deposit amount"
+    );
+
     updatePool(pid);
     if (user.amount > 0) {
       uint256 pending = user.amount.mul(pool.accEulerPerShare).div(1e12).sub(
@@ -223,11 +227,7 @@ contract EulerStaking is Ownable {
     euler.safeTransfer(to, amount);
     return amount;
   }
-
-  function renderHelloWorld () public pure returns (string memory) {
-    return euler.symbol;
-  }
-
+  
   function setEulerPerBlock(uint256 _eulerPerBlock) external onlyOwner {
     require(_eulerPerBlock > 0, "EULER per block should be greater than 0!");
     eulerPerBlock = _eulerPerBlock;

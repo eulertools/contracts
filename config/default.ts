@@ -5,14 +5,15 @@ dotenv.config();
 export const config = () => ({
 
     network: {
-      rpc: process.env.NETWORK_RPC
+      rpc: process.env.NETWORK_RPC,
+      blocksPerDay: process.env.NETWORK_BLOCKS_PER_DAY
     },
 
     wallet: {
       address: process.env.WALLET_ADDRESS,
       privateKey: process.env.WALLET_PRIVATE_KEY
     },
-    
+
     token: {
       address: process.env.EULER_TOKEN_ADDRESS,
     },

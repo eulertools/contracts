@@ -6,8 +6,10 @@ import EulerStakingSDK from './EulerStakingSDK';
 
 const conf = config();
 
+const web3 = new Web3(conf.network.rpc);
+
 function getWeb3Provider() {
-    
+
     return new HDWalletProvider(conf.wallet.privateKey,conf.network.rpc);
 }
 

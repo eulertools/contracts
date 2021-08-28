@@ -4,6 +4,6 @@ const stakingContract = artifacts.require('EulerStaking');
 
 module.exports = function (deployer) {
   deployer.deploy(Migrations);
-  deployer.deploy(EulerTools);
+//   deployer.deploy(EulerTools);
   deployer.deploy(stakingContract);
 };

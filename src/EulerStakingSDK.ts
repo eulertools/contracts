@@ -5,8 +5,6 @@ import IERC20_JSON from '../build/contracts/IERC20.json';
 
 import { config } from '../config/default';
 
-const MAX_APPROVE = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
-
 const conf = config();
 
 const web3 = new Web3(conf.network.rpc);
@@ -39,7 +37,7 @@ class EulerStakingSDK {
         if(!this.instance) {
 
             const transferContract = contract(EULER_STAKING_JSON);
-    
+
             transferContract.setProvider(this.provider);
 
             this.instance = await transferContract.at(this.contractAddress)
@@ -53,7 +51,7 @@ class EulerStakingSDK {
         if(!this.token) {
 
             const transferContract = contract(IERC20_JSON);
-    
+
             transferContract.setProvider(this.provider);
 
             this.token = await transferContract.at(this.tokenAddress);;
@@ -62,7 +60,7 @@ class EulerStakingSDK {
         return this.token;
     }
 
-    public initStaking = async (account:string,minTokenStaking:string,maxTokenStaking:string) => { 
+    public initStaking = async (account:string,minTokenStaking:string,maxTokenStaking:string) => {
 
         const instance = await this.getInstance();
 
@@ -78,7 +76,7 @@ class EulerStakingSDK {
             await instance.setMaxDepositAmount(web3.utils.toWei(maxTokenStaking, 'ether'), { from: account })
             .then((tx) => console.log(`Tx setMaxDepositAmount: ${tx.tx}`))
             .catch((e) => console.log(e.message));
-        }  
+        }
 
         const blockNumber = await web3.eth.getBlockNumber();
 
@@ -87,81 +85,135 @@ class EulerStakingSDK {
         .catch((e) => console.log(e.message));
     }
 
-    public transfer = async (account:string, amount:string) => { 
+    public setLockupDuration = async (account:string, lockupDuration:string) => {
+
+        const instance = await this.getInstance();
+
+        return instance.setLockupDuration(lockupDuration, PID, { from: account });
+    }
+
+    public transfer = async (account:string, amount:string) => {
 
         const instance = await this.getToken();
 
         return instance.transfer(this.contractAddress, amount, { from: account })
     }
 
-    public isApprove = async(account:string) => {
+    public isAllowed = async(account:string, amount:string) => {
 
         const instance = await this.getToken();
 
-        let allowance;
-    
+        let allowanceBN;
+
         try {
 
-            allowance = await instance.allowance(account, this.contractAddress);
+            allowanceBN = await instance.allowance(account, this.contractAddress);
 
         } catch(e) { console.log(e) };
 
-        return MAX_APPROVE === (web3.utils.toHex(allowance));
+        return allowanceBN.gte(web3.utils.toBN(amount));
     }
 
-    public approve = async(account:string) => {
+    public approve = async(account:string, amount:string) => {
 
         const instance = await this.getToken();
 
-        return instance.approve(this.contractAddress, MAX_APPROVE,{ from: account });
+        return instance.approve(this.contractAddress, amount, { from: account } );
     }
 
-    public deposit = async (account:string, amount:string) => { 
+    public deposit = async (account:string, amount:string) => {
 
         const instance = await this.getInstance();
 
         return instance.deposit(PID,amount, { from: account });
     }
 
-    public withdraw = async (account:string, amount:string) => { 
+    public approveAndDeposit = async(account:string, amount:string) => {
+
+        let txApprove;
+
+        if(!(await this.isAllowed(conf.wallet.address,amount))) {
+
+            await this.approve(conf.wallet.address, amount)
+            .then((tx) => txApprove = tx)
+            .catch((e) => console.log(e.message));
+        }
+
+        return {
+            'approve': txApprove,
+            'deposit': await this.deposit(conf.wallet.address, amount)
+        };
+    }
+
+    public withdraw = async (account:string, amount:string) => {
 
         const instance = await this.getInstance();
 
         return instance.withdraw(PID, amount, { from: account });
     }
 
-    public withdrawAll = async (account:string) => { 
+    public withdrawAll = async (account:string) => {
 
         const instance = await this.getInstance();
 
         return instance.withdrawAll(PID, { from: account });
     }
 
-    public claim = async (account:string) => { 
+    public claim = async (account:string) => {
 
         const instance = await this.getInstance();
 
         return instance.claim(PID, { from: account });
     }
 
-    public pendingRewards = async (account:string) => { 
+    public userInfo = async (account:string) => {
 
         const instance = await this.getInstance();
 
-        return instance.pendingRewards(PID, account);
-    }
+        const userInfo = (await instance.getUserInfo(PID, account));
 
-    public userInfo = async (account:string) => { 
+        let APR = 0
 
-        const instance = await this.getInstance();
+        if(userInfo.tvl > 0) {
 
-        const { amount , rewardDebt, pendingRewards ,lastClaim } = (await instance.userInfo(PID, account));
+            APR = (userInfo.eulerPerBlock * parseInt(conf.network.blocksPerDay, 10) * 365 * 100) / userInfo.tvl;
+        }
 
         return {
-            'amount': amount.toString(),
-            'rewardDebt': rewardDebt.toString(),
-            'pendingRewards': pendingRewards.toString(),
-            'lastClaim': lastClaim.toString()
+            'amount': web3.utils.fromWei(userInfo.amount.toString()),
+            'pendingRewards': web3.utils.fromWei(userInfo.pendingRewards.toString()),
+            'withdrawAvaliable': new Date(parseInt(userInfo.withdrawAvaliable.toString(), 10) * 1000),
+            'apr' : APR.toFixed(3),
+            'tvl' : web3.utils.fromWei(userInfo.tvl),
+        };
+    }
+
+    public poolInfo = async () => {
+
+        const instance = await this.getInstance();
+
+        const poolInfo = await instance.poolInfo(PID);
+
+        let { lockupDuration } = poolInfo;
+
+        const seconds = lockupDuration % 60;
+        lockupDuration = (lockupDuration - seconds) / 60;
+
+        const minutes = lockupDuration % 60;
+        lockupDuration = (lockupDuration - minutes) / 60;
+
+        const hours = lockupDuration % 24;
+        lockupDuration = (lockupDuration - hours) / 24;
+
+        const days = lockupDuration ;
+
+        return {
+            'allocPoint': poolInfo.allocPoint.toString(),
+            'lastRewardBlock': poolInfo.lastRewardBlock.toString(),
+            'accEulerPerShare': web3.utils.fromWei(poolInfo.accEulerPerShare.toString()),
+            'tvl': web3.utils.fromWei(poolInfo.depositedAmount.toString()),
+            'rewardsAmount': web3.utils.fromWei(poolInfo.rewardsAmount.toString()),
+            'lockupDuration': { days, hours, minutes, seconds }
         };
     }
 }

@@ -9,7 +9,7 @@ const conf = config();
 const web3 = new Web3(conf.network.rpc);
 
 function getWeb3Provider() {
-    
+
     return new HDWalletProvider(conf.wallet.privateKey,conf.network.rpc);
 }
 
@@ -19,19 +19,13 @@ const init = async () => {
 
     const sdk = new EulerStakingSDK(provider, conf.staking.address,conf.token.address);
 
-    if(!(await sdk.isApprove(conf.wallet.address))) {
+    const amount = web3.utils.toWei('10000','ether');
 
-        await sdk.approve(conf.wallet.address)
-        .then((tx) => console.log(`Tx Approve: ${tx.tx}`))
-        .catch((e) => console.log(e.message));
-    } 
-
-    await sdk.deposit(conf.wallet.address, web3.utils.toWei('50000','ether'))
-    .then((tx) => console.log(`Tx Deposit: ${tx.tx}`))
-    .catch((e) => console.log(e.message));
-
-    await sdk.deposit(conf.wallet.address, web3.utils.toWei('1000','ether'))
-    .then((tx) => console.log(`Tx Deposit: ${tx.tx}`))
+    await sdk.approveAndDeposit(conf.wallet.address, amount)
+    .then((tx) => {
+        if(tx.approve) console.log(`Tx Approve: ${tx.approve.tx}`)
+        if(tx.deposit) console.log(`Tx Deposit: ${tx.deposit.tx}`)
+    })
     .catch((e) => console.log(e.message));
 
     provider.engine.stop();

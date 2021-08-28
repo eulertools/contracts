@@ -16,6 +16,14 @@ contract EulerStaking is Ownable {
     uint256 lastClaim;
   }
 
+  struct GetUserInfo {
+    uint256 amount;
+    uint256 pendingRewards;
+    uint256 withdrawAvaliable;
+    uint256 eulerPerBlock;
+    uint256 tvl;
+  }
+
   struct PoolInfo {
     uint256 allocPoint;
     uint256 lastRewardBlock;
@@ -72,9 +80,7 @@ contract EulerStaking is Ownable {
     pool.lockupDuration = _lockupDuration;
   }
 
-  function pendingRewards(uint256 pid, address _user)
-    external
-    view
+  function pendingRewards(uint256 pid, address _user) private view
     returns (uint256)
   {
     require(
@@ -100,6 +106,35 @@ contract EulerStaking is Ownable {
       user.amount.mul(accEulerPerShare).div(1e12).sub(user.rewardDebt).add(
         user.pendingRewards
       );
+  }
+
+  function getUserInfo(uint256 pid, address _user)
+    external
+    view
+    returns (GetUserInfo memory) {
+
+        PoolInfo storage pool = poolInfo[pid];
+
+        UserInfo storage user = userInfo[pid][_user];
+
+        GetUserInfo memory userAux;
+
+        userAux.amount = user.amount;
+
+        userAux.withdrawAvaliable = 0;
+
+        if(user.lastClaim > 0) {
+
+            userAux.withdrawAvaliable = user.lastClaim + pool.lockupDuration;
+        }
+
+        userAux.eulerPerBlock = eulerPerBlock;
+
+        userAux.tvl = pool.depositedAmount;
+
+        userAux.pendingRewards = pendingRewards(pid,_user);
+
+        return userAux;
   }
 
   function updatePool(uint256 pid) internal {
@@ -227,7 +262,7 @@ contract EulerStaking is Ownable {
     euler.safeTransfer(to, amount);
     return amount;
   }
-  
+
   function setEulerPerBlock(uint256 _eulerPerBlock) external onlyOwner {
     require(_eulerPerBlock > 0, "EULER per block should be greater than 0!");
     eulerPerBlock = _eulerPerBlock;

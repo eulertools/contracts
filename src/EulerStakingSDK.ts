@@ -1,15 +1,13 @@
 import Web3 from 'web3';
 import contract from "truffle-contract";
 import EULER_STAKING_JSON from '../build/contracts/EulerStaking.json';
-import IERC20_JSON from '../build/contracts/IERC20.json';
+import EULER_JSON from '../build/contracts/EulerTools.json';
 
 import { config } from '../config/default';
 
 const conf = config();
 
 const web3 = new Web3(conf.network.rpc);
-
-const PID = 0;
 
 class EulerStakingSDK {
 
@@ -50,7 +48,7 @@ class EulerStakingSDK {
 
         if(!this.token) {
 
-            const transferContract = contract(IERC20_JSON);
+            const transferContract = contract(EULER_JSON);
 
             transferContract.setProvider(this.provider);
 
@@ -68,28 +66,39 @@ class EulerStakingSDK {
         .then((tx) => console.log(`Tx setEulerToken: ${tx.tx}`))
         .catch((e) => console.log(e.message));
 
-        await instance.setMinDepositAmount(web3.utils.toWei(minTokenStaking, 'ether'), { from: account })
-        .then((tx) => console.log(`Tx setMinDepositAmount: ${tx.tx}`))
-        .catch((e) => console.log(e.message));
+        // await instance.setMinDepositAmount(web3.utils.toWei(minTokenStaking, 'ether'), { from: account })
+        // .then((tx) => console.log(`Tx setMinDepositAmount: ${tx.tx}`))
+        // .catch((e) => console.log(e.message));
 
-        if(maxTokenStaking) {
-            await instance.setMaxDepositAmount(web3.utils.toWei(maxTokenStaking, 'ether'), { from: account })
-            .then((tx) => console.log(`Tx setMaxDepositAmount: ${tx.tx}`))
-            .catch((e) => console.log(e.message));
-        }
+        // if(maxTokenStaking) {
+        //     await instance.setMaxDepositAmount(web3.utils.toWei(maxTokenStaking, 'ether'), { from: account })
+        //     .then((tx) => console.log(`Tx setMaxDepositAmount: ${tx.tx}`))
+        //     .catch((e) => console.log(e.message));
+        // }
 
-        const blockNumber = await web3.eth.getBlockNumber();
+        // const blockNumber = await web3.eth.getBlockNumber();
 
-        await instance.startStaking(blockNumber, { from: account })
-        .then((tx) => console.log(`Tx startStaking: ${tx.tx}`))
-        .catch((e) => console.log(e.message));
+        // await instance.startStaking(blockNumber, { from: account })
+        // .then((tx) => console.log(`Tx startStaking: ${tx.tx}`))
+        // .catch((e) => console.log(e.message));
+
+        // await this.excludeContractFromFees(account)
+        // .then((tx) => console.log(`Tx include whitelist: ${tx.tx}`))
+        // .catch((e) => console.log(e.message));
+    }
+
+    public excludeContractFromFees = async (account:string) => {
+
+        const token = await this.getToken();
+
+        return token.excludeAccount(this.contractAddress, { from: account });
     }
 
     public setLockupDuration = async (account:string, lockupDuration:string) => {
 
         const instance = await this.getInstance();
 
-        return instance.setLockupDuration(lockupDuration, PID, { from: account });
+        return instance.setLockupDuration(lockupDuration, { from: account });
     }
 
     public transfer = async (account:string, amount:string) => {
@@ -125,7 +134,7 @@ class EulerStakingSDK {
 
         const instance = await this.getInstance();
 
-        return instance.deposit(PID,amount, { from: account });
+        return instance.deposit(amount, { from: account });
     }
 
     public approveAndDeposit = async(account:string, amount:string) => {
@@ -149,28 +158,49 @@ class EulerStakingSDK {
 
         const instance = await this.getInstance();
 
-        return instance.withdraw(PID, amount, { from: account });
+        return instance.withdraw(amount, { from: account });
     }
 
     public withdrawAll = async (account:string) => {
 
         const instance = await this.getInstance();
 
-        return instance.withdrawAll(PID, { from: account });
+        return instance.withdrawAll({ from: account });
     }
 
     public claim = async (account:string) => {
 
         const instance = await this.getInstance();
 
-        return instance.claim(PID, { from: account });
+        return instance.claim({ from: account });
     }
 
     public userInfo = async (account:string) => {
 
         const instance = await this.getInstance();
 
-        const userInfo = (await instance.getUserInfo(PID, account));
+        const userInfo = (await instance.getUserInfo(account));
+
+        return this.mappingUserInfo(userInfo);
+    }
+
+    public userInfoByPosition = async (position:number) => {
+
+        const instance = await this.getInstance();
+
+        const userInfo = (await instance.getUserInfoByPosition(position));
+
+        return this.mappingUserInfo(userInfo);
+    }
+
+    public totalUsers = async () => {
+
+        const instance = await this.getInstance();
+
+        return (await instance.getTotalUsers()).toString();
+    }
+
+    private mappingUserInfo = (userInfo:any) => {
 
         let APR = 0
 
@@ -192,7 +222,7 @@ class EulerStakingSDK {
 
         const instance = await this.getInstance();
 
-        const poolInfo = await instance.poolInfo(PID);
+        const poolInfo = await instance.poolInfo();
 
         let { lockupDuration } = poolInfo;
 
@@ -208,7 +238,6 @@ class EulerStakingSDK {
         const days = lockupDuration ;
 
         return {
-            'allocPoint': poolInfo.allocPoint.toString(),
             'lastRewardBlock': poolInfo.lastRewardBlock.toString(),
             'accEulerPerShare': web3.utils.fromWei(poolInfo.accEulerPerShare.toString()),
             'tvl': web3.utils.fromWei(poolInfo.depositedAmount.toString()),

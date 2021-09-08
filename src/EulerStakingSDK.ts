@@ -66,25 +66,25 @@ class EulerStakingSDK {
         .then((tx) => console.log(`Tx setEulerToken: ${tx.tx}`))
         .catch((e) => console.log(e.message));
 
-        // await instance.setMinDepositAmount(web3.utils.toWei(minTokenStaking, 'ether'), { from: account })
-        // .then((tx) => console.log(`Tx setMinDepositAmount: ${tx.tx}`))
-        // .catch((e) => console.log(e.message));
+        await instance.setMinDepositAmount(web3.utils.toWei(minTokenStaking, 'ether'), { from: account })
+        .then((tx) => console.log(`Tx setMinDepositAmount: ${tx.tx}`))
+        .catch((e) => console.log(e.message));
 
-        // if(maxTokenStaking) {
-        //     await instance.setMaxDepositAmount(web3.utils.toWei(maxTokenStaking, 'ether'), { from: account })
-        //     .then((tx) => console.log(`Tx setMaxDepositAmount: ${tx.tx}`))
-        //     .catch((e) => console.log(e.message));
-        // }
+        if(maxTokenStaking) {
+            await instance.setMaxDepositAmount(web3.utils.toWei(maxTokenStaking, 'ether'), { from: account })
+            .then((tx) => console.log(`Tx setMaxDepositAmount: ${tx.tx}`))
+            .catch((e) => console.log(e.message));
+        }
 
-        // const blockNumber = await web3.eth.getBlockNumber();
+        const blockNumber = await web3.eth.getBlockNumber();
 
-        // await instance.startStaking(blockNumber, { from: account })
-        // .then((tx) => console.log(`Tx startStaking: ${tx.tx}`))
-        // .catch((e) => console.log(e.message));
+        await instance.startStaking(blockNumber, { from: account })
+        .then((tx) => console.log(`Tx startStaking: ${tx.tx}`))
+        .catch((e) => console.log(e.message));
 
-        // await this.excludeContractFromFees(account)
-        // .then((tx) => console.log(`Tx include whitelist: ${tx.tx}`))
-        // .catch((e) => console.log(e.message));
+        await this.excludeContractFromFees(account)
+        .then((tx) => console.log(`Tx include whitelist: ${tx.tx}`))
+        .catch((e) => console.log(e.message));
     }
 
     public excludeContractFromFees = async (account:string) => {

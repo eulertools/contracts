@@ -253,6 +253,7 @@ contract EulerStaking is Ownable {
       block.timestamp > user.lastClaim + poolInfo.lockupDuration,
       "You cannot withdraw yet!"
     );
+    require(amount > 0, "Withdrawing more than 0!");
     require(user.amount >= amount, "Withdrawing more than you have!");
     updatePool();
     uint256 pending = user.amount.mul(poolInfo.accEulerPerShare).div(1e12).sub(
@@ -268,6 +269,13 @@ contract EulerStaking is Ownable {
     }
     user.rewardDebt = user.amount.mul(poolInfo.accEulerPerShare).div(1e12);
     emit Withdraw(msg.sender, amount);
+
+    if(user.amount == 0) {
+
+        user.exists = false;
+
+        removeUser(msg.sender);
+    }
   }
 
   function withdrawAll() external {
@@ -294,6 +302,27 @@ contract EulerStaking is Ownable {
       poolInfo.rewardsAmount = poolInfo.rewardsAmount.sub(claimedAmount);
     }
     user.rewardDebt = user.amount.mul(poolInfo.accEulerPerShare).div(1e12);
+  }
+
+  function removeUser(address user) internal {
+
+    uint index = find(user);
+
+    for (uint i = index; i < users.length - 1; i++) {
+
+        users[i] = users[i + 1];
+    }
+
+    users.pop();
+  }
+
+  function find(address user) internal view returns(uint)  {
+
+    uint i = 0;
+
+    while (users[i] != user) i++;
+
+    return i;
   }
 
   function safeEulerTransfer(

@@ -33,6 +33,7 @@ contract EulerStaking is Ownable {
     uint256 lockupDuration;
   }
 
+  uint256 public initialLockupDuration = 30 days;
   uint256 public constant maxFee = 10000;
 
   IERC20 public euler;
@@ -70,12 +71,16 @@ contract EulerStaking is Ownable {
     require(address(_euler) != address(0), "Token address can't be zero");
     require(address(euler) == address(0), "Token already set!");
     euler = _euler;
-    addPool(30 days);
+    addPool(initialLockupDuration);
     emit SetEulerToken(msg.sender, address(_euler));
   }
 
   function startStaking(uint256 startBlock) external onlyOwner {
-    require(poolInfo.lastRewardBlock == 0, "Staking already started");
+    require(
+        poolInfo.lockupDuration == initialLockupDuration && poolInfo.lastRewardBlock == 0,
+        "Staking already started"
+    );
+
     poolInfo.lastRewardBlock = startBlock;
     emit StartStaking(msg.sender, startBlock);
   }
@@ -253,7 +258,7 @@ contract EulerStaking is Ownable {
       block.timestamp > user.lastClaim + poolInfo.lockupDuration,
       "You cannot withdraw yet!"
     );
-    require(amount > 0, "Withdrawing more than 0!");
+    require(amount > 0, "The amount to withdraw cannot be zero!");
     require(user.amount >= amount, "Withdrawing more than you have!");
     updatePool();
     uint256 pending = user.amount.mul(poolInfo.accEulerPerShare).div(1e12).sub(

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Euler Tools Solutions, SL
+//
+// SPDX-License-Identifier: MIT
+
 import HDWalletProvider  from 'truffle-hdwallet-provider';
 
 import { config } from "../config/default";

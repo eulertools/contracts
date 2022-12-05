@@ -2,6 +2,8 @@
  *Submitted for verification at BscScan.com on 2021-03-26
 */
 
+// SPDX-FileCopyrightText: 2022 Euler Tools Solutions, SL
+//
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0 <=0.9.0;

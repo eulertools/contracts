@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2022 Euler Tools Solutions, SL
+//
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.7;
 

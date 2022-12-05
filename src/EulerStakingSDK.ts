@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Euler Tools Solutions, SL
+//
+// SPDX-License-Identifier: MIT
+
 import Web3 from 'web3';
 import contract from "truffle-contract";
 import EULER_STAKING_JSON from '../build/contracts/EulerStaking.json';

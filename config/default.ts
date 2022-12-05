@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Euler Tools Solutions, SL
+//
+// SPDX-License-Identifier: MIT
+
 import dotenv from 'dotenv';
 
 dotenv.config();

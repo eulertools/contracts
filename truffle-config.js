@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Euler Tools Solutions, SL
+//
+// SPDX-License-Identifier: CC0-1.0
+
 const HDWalletProvider = require('truffle-hdwallet-provider');
 require('dotenv').config();
 

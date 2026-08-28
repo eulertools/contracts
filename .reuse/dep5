@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Euler Tools Solutions Contracts
+Upstream-Contact: Euler Tools Solutions, SL <TBD@euler.example.com>
+Source: https://github.com/eulertools/contracts
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...
